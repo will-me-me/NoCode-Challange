@@ -1,0 +1,434 @@
+<template>
+  <div class="overflow-hidden">
+    <div
+      class="d-flex overflow-hidden position-relative justify-center"
+      :class="['container']"
+      @wheel="scrollHandler"
+    >
+      <div
+        class="text-center position-absolute"
+        color="#929292"
+        :class="[
+          'orbit-date',
+          animationDirection,
+          { 'date-shift': isAnimation },
+        ]"
+      >
+        <p :class="[animationDirection, { 'date-vanish': isAnimation }]">
+          {{ dateFormat(usersPerOrbit[0]?.contact_date) }}
+        </p>
+      </div>
+      <!-- {{ usersPerOrbit.length }} -->
+      <div
+        v-for="i in usersPerOrbit.length"
+        :key="i"
+        class="position-absolute d-flex justify-space-evenly align-center"
+        :class="[
+          'single-orbit',
+          animationDirection,
+          isAnimation ? `animation-sequence-${i}` : '',
+        ]"
+        :style="[calcDimensions(i)]"
+      >
+        <div
+          v-for="j in usersPerOrbit[i - 1]?.array"
+          :key="j"
+          class="user-icon position-absolute"
+          :style="calcRotation(i, j, true)"
+        >
+          <v-avatar
+            size="48"
+            :style="calcRotation(i, j, false)"
+            id="v-avatar-imag"
+          >
+            <v-tooltip
+              theme="#0A0A0A"
+              activator="parent"
+              location="end"
+              ref="tooltip"
+            >
+              <template v-slot:activator="{ props }">
+                <v-img
+                  :src="j.img"
+                  class="gradient-border"
+                  v-bind="props"
+                  @mouseenter="$refs.tooltip.runDelay('open')"
+                  @mouseleave="$refs.tooltip.runDelay('close')"
+                ></v-img>
+              </template>
+              <v-card flat="flat" width="600" color="#0A0A0A">
+                <v-card-title class="d-flex">
+                  <v-avatar size="90">
+                    <v-img class="gradient-border" :src="j.img"></v-img>
+                  </v-avatar>
+                  <div class="ml-8" color="white" style="position: inherit">
+                    <div
+                      style="
+                        font-size: 16px;
+                        font-weight: 700;
+                        line-height: 19.36px;
+                        margin-bottom: 5px;
+                      "
+                    >
+                      <p>{{ j.name }}</p>
+                    </div>
+                    <div class="contact-position">{{ j?.position }}</div>
+                    <div class="contact-city">{{ j?.city }}</div>
+                    <div class="d-flex align-center">
+                      <div>
+                        <v-avatar
+                          v-for="i in MembersIcons"
+                          :key="i"
+                          :image="i"
+                          size="25"
+                        >
+                        </v-avatar>
+                      </div>
+                      <div class="more-contacts">
+                        <div>Jason Diamond, John Eremic,</div>
+                        <div>and 281 other mutual connections</div>
+                      </div>
+                    </div>
+                  </div>
+                  <v-spacer></v-spacer>
+                  <v-card class="primary-lg" variant="outlined" height="60">
+                    <v-avatar size="60">
+                      <v-img
+                        class="gradient-border"
+                        src="./company.png"
+                      ></v-img>
+                    </v-avatar>
+                  </v-card>
+                </v-card-title>
+
+                <v-card-text class="mt-4 d-flex align-center" variant="tonal">
+                  <v-icon class="ml-6" size="large">mdi-email </v-icon>
+                  <div class="message-head ml-14">Reply from {{ j.name }}</div>
+                </v-card-text>
+                <div class="reply-body">
+                  <div class="message-date">
+                    <div>Saturday, November 4 2023 at 9:04 AM EST</div>
+                    <div>2 days ago</div>
+                  </div>
+                </div>
+                <v-divider></v-divider>
+                <v-expansion-panels bg-color="#0A0A0A" variant="inset">
+                  <v-expansion-panel
+                    :title="j?._orbits_last_message?.message_head"
+                    :text="j?._orbits_last_message?.message"
+                  >
+                  </v-expansion-panel>
+                </v-expansion-panels>
+              </v-card>
+            </v-tooltip>
+          </v-avatar>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { useNuxtApp } from "#app";
+const nuxtApp = useNuxtApp();
+import { onMounted, reactive, ref, watchEffect } from "vue";
+const MembersIcons = [
+  "https://i.pravatar.cc/150?img=32",
+  "https://i.pravatar.cc/150?img=22",
+  "https://i.pravatar.cc/150?img=60",
+  "https://i.pravatar.cc/150?img=2",
+];
+const orbitShift = ref(nuxtApp.$screenHeight >= 1000 ? "200px" : "160px");
+const orbitTranslate = ref(`-${orbitShift.value.slice(0, 3) / 2}px`);
+const dateShift = ref(`${orbitShift.value.slice(0, 3) / 2 - 12}px`);
+const tooltip = ref(false);
+const priorBuffer = ref([]);
+const usersPerOrbit = ref([]);
+const laterBuffer = ref([]);
+const fetchDate = ref(new Date().toISOString().slice(0, 10));
+const isAnimation = ref(false);
+const animationDirection = ref("animation");
+const isConnectionInfoVisible = ref(false);
+const eventTarget = ref();
+const connectionData = reactive({});
+
+const calcDimensions = (position) => {
+  return {
+    height: `calc(100% * 2 - ${
+      orbitShift.value.slice(0, 3) * (position - 1)
+    }px`,
+    top: `calc(${orbitShift.value.slice(0, 3) / 2}px * ${position})`,
+  };
+};
+
+const dateFormat = (date) => {
+  if (date === fetchDate.value) return "Today";
+  return new Date(date).toLocaleString("en-GB", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+};
+
+const calcRotation = (orbitNum, user, direction) => {
+  const listLength = usersPerOrbit.value[orbitNum - 1]?.array.length;
+  const halfList = Math.ceil(listLength / 2);
+  const userIndex = usersPerOrbit.value[orbitNum - 1]?.array.indexOf(user) + 1;
+  const rotateDirection = direction ? "+" : "-";
+  let resultingTransform;
+  if (orbitNum === 1 && listLength % 2) {
+    if (userIndex <= halfList) {
+      resultingTransform = `rotate(${
+        rotateDirection + (84 / halfList) * userIndex
+      }deg)`;
+    } else {
+      resultingTransform = `rotate(${
+        rotateDirection +
+        (96 - 84 / halfList + (84 / halfList) * (userIndex - halfList))
+      }deg)`;
+    }
+  } else {
+    resultingTransform = `rotate(${
+      rotateDirection + (180 / (listLength + 1)) * userIndex
+    }deg)`;
+  }
+  return {
+    transform: resultingTransform,
+  };
+};
+
+const scrollHandler = (e) => {
+  isConnectionInfoVisible.value = false;
+  animationDirection.value = e.deltaY > 0 ? "animation" : "reverse-animation";
+  if (!isAnimation.value) {
+    shiftAndPullData(animationDirection.value);
+  }
+};
+
+const shiftAndPullData = async (direction = "animation") => {
+  console.log(direction);
+  if (direction === "animation" && laterBuffer.value.length) {
+    isAnimation.value = true;
+    setTimeout(async () => {
+      priorBuffer.value.push(usersPerOrbit.value.shift());
+      usersPerOrbit.value.push(laterBuffer.value[0]);
+      laterBuffer.value.shift();
+      let currentDate = new Date(fetchDate.value);
+      currentDate.setDate(currentDate.getDate() - 1);
+      fetchDate.value = currentDate.toISOString().slice(0, 10);
+      // console.log(`fetching as from , ${fetchDate.value}`);
+      const arr = await fetchNineDaysFromDate(fetchDate.value);
+      // console.log("Fetched data:", arr);
+      // let last = Object.keys(arr)[Object.keys(arr).length - 1];
+      // console.log("here es the last Item" + " " + last);
+      laterBuffer.value = arr;
+      // console.log(laterBuffer.value);
+      // console.log(`userPerorbit`, usersPerOrbit.value);
+      isAnimation.value = false;
+    }, 990);
+  } else if (priorBuffer.value.length) {
+    usersPerOrbit.value.unshift(priorBuffer.value.pop());
+    laterBuffer.value.unshift(usersPerOrbit.value.pop());
+    isAnimation.value = true;
+    setTimeout(() => {
+      isAnimation.value = false;
+    }, 990);
+  }
+};
+
+const fetchNineDaysFromDate = async (date) => {
+  const res = await fetch(
+    `https://xsrr-l2ye-dpbj.f2.xano.io/api:oUvfVMO5/receive_week?start_date=${date}`
+  );
+  const data = await res.json();
+  return data;
+};
+
+onMounted(async () => {
+  let data = await fetchNineDaysFromDate(fetchDate.value);
+  laterBuffer.value = data;
+  usersPerOrbit.value = data;
+});
+</script>
+
+<style scoped>
+.gradient-border {
+  background-image: linear-gradient(180deg, #ffffff 0%, #000000 100%);
+  background-origin: border-box;
+  box-shadow: inset 0 100vw var(--vt-c-black);
+  border: 1px solid transparent;
+}
+
+.single-orbit {
+  height: 100%;
+  border-radius: 100%;
+  aspect-ratio: 1;
+  background-image: linear-gradient(
+    180deg,
+    #ffffff -6.6%,
+    rgba(255, 255, 255, 0) 46.31%
+  );
+  background-origin: border-box;
+  box-shadow: inset 0 100vw var(--vt-c-black);
+  border: 1px solid transparent;
+}
+
+.container {
+  padding-top: 30px;
+  height: 100vh;
+}
+
+.orbit-date {
+  top: v-bind(dateShift);
+  background-color: var(--vt-c-black);
+  z-index: 10;
+}
+
+.user-icon {
+  top: 0px;
+  left: 0px;
+  height: 50%;
+  width: 50%;
+  transform-origin: bottom right;
+  pointer-events: none;
+}
+
+#v-avatar-imag {
+  z-index: 100;
+  position: absolute;
+  bottom: -30px;
+  left: -30px;
+  height: 60px;
+  width: 60px;
+  pointer-events: all;
+}
+
+.animation {
+  animation-duration: 1s;
+  animation-timing-function: linear;
+}
+
+.reverse-animation {
+  animation-duration: 1s;
+  animation-timing-function: linear;
+  animation-direction: reverse;
+}
+
+.date-shift {
+  animation-name: middle-orbit;
+}
+
+.date-vanish {
+  animation-name: vanish-animation;
+}
+
+.invisible {
+  opacity: 0;
+}
+
+.animation-sequence-1 {
+  animation-name: outer-orbit, scale-factor-1;
+}
+
+.animation-sequence-2 {
+  animation-name: middle-orbit, scale-factor-2;
+}
+
+.animation-sequence-3 {
+  animation-name: middle-orbit, scale-factor-3;
+}
+
+.animation-sequence-4 {
+  animation-name: middle-orbit, scale-factor-4;
+}
+
+.animation-sequence-5 {
+  animation-name: middle-orbit, scale-factor-5;
+}
+
+.animation-sequence-6 {
+  animation-name: middle-orbit, scale-factor-6;
+}
+
+.animation-sequence-7 {
+  animation-name: middle-orbit, scale-factor-7;
+}
+
+.animation-sequence-8 {
+  animation-name: inner-orbit, scale-factor-8;
+}
+
+@keyframes middle-orbit {
+  100% {
+    transform: translateY(v-bind(orbitTranslate));
+  }
+}
+
+@keyframes outer-orbit {
+  100% {
+    transform: translateY(v-bind(orbitTranslate));
+    opacity: 0;
+  }
+}
+
+@keyframes inner-orbit {
+  100% {
+    transform: translateY(v-bind(orbitTranslate));
+    opacity: 1;
+  }
+}
+
+@keyframes vanish-animation {
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes scale-factor-1 {
+  100% {
+    height: calc(100% * 2 + v-bind(orbitShift));
+  }
+}
+
+@keyframes scale-factor-2 {
+  100% {
+    height: calc(100% * 2);
+  }
+}
+
+@keyframes scale-factor-3 {
+  100% {
+    height: calc(100% * 2 - v-bind(orbitShift) * 2 + v-bind(orbitShift));
+  }
+}
+
+@keyframes scale-factor-4 {
+  100% {
+    height: calc(100% * 2 - v-bind(orbitShift) * 3 + v-bind(orbitShift));
+  }
+}
+
+@keyframes scale-factor-5 {
+  100% {
+    height: calc(100% * 2 - v-bind(orbitShift) * 4 + v-bind(orbitShift));
+  }
+}
+
+@keyframes scale-factor-6 {
+  100% {
+    height: calc(100% * 2 - v-bind(orbitShift) * 5 + v-bind(orbitShift));
+  }
+}
+
+@keyframes scale-factor-7 {
+  100% {
+    height: calc(100% * 2 - v-bind(orbitShift) * 6 + v-bind(orbitShift));
+  }
+}
+
+@keyframes scale-factor-8 {
+  100% {
+    height: calc(100% * 2 - v-bind(orbitShift) * 7 + v-bind(orbitShift));
+  }
+}
+</style>
