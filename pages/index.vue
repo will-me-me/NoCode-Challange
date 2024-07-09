@@ -40,6 +40,8 @@
             size="48"
             :style="calcRotation(i, j, false)"
             id="v-avatar-imag"
+            @mouseenter="showTooltip(j)"
+            @mouseleave="hideTooltip"
           >
             <v-tooltip
               theme="#0A0A0A"
@@ -52,11 +54,15 @@
                   :src="j.img"
                   class="gradient-border"
                   v-bind="props"
-                  @mouseenter="$refs.tooltip.runDelay('open')"
-                  @mouseleave="$refs.tooltip.runDelay('close')"
                 ></v-img>
               </template>
-              <v-card flat="flat" width="600" color="#0A0A0A">
+              <v-card
+                @mouseenter="persistTooltip"
+                @mouseleave="closeTooltip"
+                flat="flat"
+                width="600"
+                color="#0A0A0A"
+              >
                 <v-card-title class="d-flex">
                   <v-avatar size="90">
                     <v-img class="gradient-border" :src="j.img"></v-img>
@@ -142,6 +148,7 @@ const orbitShift = ref(nuxtApp.$screenHeight >= 1000 ? "200px" : "160px");
 const orbitTranslate = ref(`-${orbitShift.value.slice(0, 3) / 2}px`);
 const dateShift = ref(`${orbitShift.value.slice(0, 3) / 2 - 12}px`);
 const tooltip = ref(false);
+const tooltipRef = ref(null);
 const priorBuffer = ref([]);
 const usersPerOrbit = ref([]);
 const laterBuffer = ref([]);
@@ -159,6 +166,42 @@ const calcDimensions = (position) => {
     }px`,
     top: `calc(${orbitShift.value.slice(0, 3) / 2}px * ${position})`,
   };
+};
+
+// #ToDo Fix The ToolTip Hover
+
+const showTooltip = (item) => {
+  tooltip.value = true;
+  if (tooltipRef.value && typeof tooltipRef.value.runDelay === "function") {
+    tooltipRef.value.runDelay("open");
+  } else {
+    console.error("runDelay method not found");
+  }
+};
+
+const hideTooltip = () => {
+  tooltip.value = false;
+  if (tooltipRef.value && typeof tooltipRef.value.runDelay === "function") {
+    tooltipRef.value.runDelay("close");
+  } else {
+    console.error("runDelay method not found");
+  }
+};
+
+const persistTooltip = () => {
+  if (tooltipRef.value && typeof tooltipRef.value.runDelay === "function") {
+    tooltipRef.value.runDelay("open");
+  } else {
+    console.error("runDelay method not found");
+  }
+};
+
+const closeTooltip = () => {
+  if (tooltipRef.value && typeof tooltipRef.value.runDelay === "function") {
+    tooltipRef.value.runDelay("close");
+  } else {
+    console.error("runDelay method not found");
+  }
 };
 
 const dateFormat = (date) => {
@@ -216,14 +259,8 @@ const shiftAndPullData = async (direction = "animation") => {
       let currentDate = new Date(fetchDate.value);
       currentDate.setDate(currentDate.getDate() - 1);
       fetchDate.value = currentDate.toISOString().slice(0, 10);
-      // console.log(`fetching as from , ${fetchDate.value}`);
       const arr = await fetchNineDaysFromDate(fetchDate.value);
-      // console.log("Fetched data:", arr);
-      // let last = Object.keys(arr)[Object.keys(arr).length - 1];
-      // console.log("here es the last Item" + " " + last);
       laterBuffer.value = arr;
-      // console.log(laterBuffer.value);
-      // console.log(`userPerorbit`, usersPerOrbit.value);
       isAnimation.value = false;
     }, 990);
   } else if (priorBuffer.value.length) {
