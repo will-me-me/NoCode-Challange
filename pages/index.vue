@@ -41,6 +41,7 @@
             :style="calcRotation(i, j, false)"
             id="v-avatar-imag"
           >
+            <!-- Start of Tooltip -->
             <v-tooltip
               theme="#0A0A0A"
               activator="parent"
@@ -98,10 +99,14 @@
                     </v-avatar>
                   </v-card>
                 </v-card-title>
+                <v-divider></v-divider>
 
-                <v-card-text class="mt-4 d-flex align-center" variant="tonal">
-                  <v-icon class="ml-6" size="large">mdi-email </v-icon>
-                  <div class="message-head ml-14">Reply from {{ j.name }}</div>
+                <v-card-text
+                  class="mt-2 d-flex align-center"
+                  variant="outlined"
+                >
+                  <v-icon class="ml-2" size="large">mdi-email </v-icon>
+                  <div class="message-head ml-6">Reply from {{ j.name }}</div>
                 </v-card-text>
                 <div class="reply-body">
                   <div class="message-date">
@@ -110,20 +115,23 @@
                   </div>
                 </div>
                 <v-divider></v-divider>
-                <v-expansion-panels
-                  bg-color="#0A0A0A"
-                  variant="inset"
-                  :readonly="readonly"
-                  v-model="panel"
-                >
-                  <v-expansion-panel
-                    :title="j?._orbits_last_message?.message_head"
-                    :text="j?._orbits_last_message?.message"
+                <v-card color="transparent" variant="outlined">
+                  <v-expansion-panels
+                    bg-color="#0A0A0A"
+                    variant="inset"
+                    :readonly="readonly"
+                    v-model="panel"
                   >
-                  </v-expansion-panel>
-                </v-expansion-panels>
+                    <v-expansion-panel
+                      :title="j?._orbits_last_message?.message_head"
+                      :text="j?._orbits_last_message?.message"
+                    >
+                    </v-expansion-panel>
+                  </v-expansion-panels>
+                </v-card>
               </v-card>
             </v-tooltip>
+            <!-- End of The TooTip -->
           </v-avatar>
         </div>
       </div>
@@ -134,7 +142,7 @@
 <script setup>
 import { useNuxtApp } from "#app";
 const nuxtApp = useNuxtApp();
-import { onMounted, reactive, ref, watchEffect } from "vue";
+import { onMounted, reactive, ref } from "vue";
 const MembersIcons = [
   "https://i.pravatar.cc/150?img=32",
   "https://i.pravatar.cc/150?img=22",
@@ -224,23 +232,21 @@ const shiftAndPullData = async (direction = "animation") => {
       const arr = await fetchNineDaysFromDate(fetchDate.value);
       laterBuffer.value = arr;
       isAnimation.value = false;
-    }, 900);
+    }, 995);
   } else if (priorBuffer.value.length) {
     usersPerOrbit.value.unshift(priorBuffer.value.pop());
     laterBuffer.value.unshift(usersPerOrbit.value.pop());
     isAnimation.value = true;
     setTimeout(() => {
       isAnimation.value = false;
-    }, 900);
+    }, 995);
   }
 };
 
 const fetchNineDaysFromDate = async (date) => {
-  const res = await fetch(
+  return await fetch(
     `https://xsrr-l2ye-dpbj.f2.xano.io/api:oUvfVMO5/receive_week?start_date=${date}`
-  );
-  const data = await res.json();
-  return data;
+  ).then((response) => response.json());
 };
 
 onMounted(async () => {
