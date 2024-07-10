@@ -15,6 +15,7 @@ export const userMainStore = defineStore("mainstore", {
       userOrbits: [],
       priorBuffer: [],
       laterBuffer: [],
+      fetchDate: new Date().toISOString().slice(0, 10),
     };
   },
   actions: {

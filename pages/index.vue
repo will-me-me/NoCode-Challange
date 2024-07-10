@@ -150,7 +150,7 @@ const orbitShift = ref(nuxtApp.$screenHeight >= 1000 ? "200px" : "160px");
 const orbitTranslate = ref(`-${orbitShift.value.slice(0, 3) / 2}px`);
 const dateShift = ref(`${orbitShift.value.slice(0, 3) / 2 - 12}px`);
 const tooltip = ref(false);
-const fetchDate = ref(new Date().toISOString().slice(0, 10));
+// const fetchDate = ref(new Date().toISOString().slice(0, 10));
 const isAnimation = ref(false);
 const animationDirection = ref("animation");
 const isConnectionInfoVisible = ref(false);
@@ -165,7 +165,7 @@ const calcDimensions = (position) => {
 };
 
 const dateFormat = (date) => {
-  if (date === fetchDate.value) {
+  if (date === store.fetchDate) {
     return "Today";
   }
   return new Date(date).toLocaleString("en-GB", {
@@ -222,11 +222,11 @@ const animateOrbitShift = async (direction = "animation") => {
       store.priorBuffer.push(store.userOrbits.shift());
       store.userOrbits.push(store.laterBuffer[0]);
       store.laterBuffer.shift();
-      let currentDate = new Date(fetchDate.value);
+      let currentDate = new Date(store.fetchDate);
       currentDate.setDate(currentDate.getDate() - 1);
-      fetchDate.value = currentDate.toISOString().slice(0, 10);
+      store.fetchDate = currentDate.toISOString().slice(0, 10);
       console.log(firstItemDate());
-      const arr = await store.getApiData(fetchDate.value);
+      const arr = await store.getApiData(store.fetchDate);
       store.laterBuffer = arr;
       isAnimation.value = false;
     }, 990);
@@ -295,7 +295,7 @@ const animateOrbitShift = async (direction = "animation") => {
 // };
 
 onMounted(async () => {
-  await store.getApiData(fetchDate.value);
+  await store.getApiData(store.fetchDate);
 });
 </script>
 
