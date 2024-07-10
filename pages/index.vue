@@ -242,6 +242,7 @@ const animateOrbitShift = async (direction = "animation") => {
         console.log("here comes arr" + " ", arr);
         store.laterBuffer = arr;
         console.log(store.laterBuffer);
+        store.userOrbits = arr;
         // Debug
         console.log("After fetching new data:", store.laterBuffer);
 
