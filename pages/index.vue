@@ -15,7 +15,7 @@
         ]"
       >
         <p :class="[animationDirection, { 'date-vanish': isAnimation }]">
-          {{ dateFormat(firtItemDate()) }}
+          {{ dateFormat(firstItemDate()) }}
         </p>
       </div>
       <!-- {{ usersPerOrbit.length }} -->
@@ -175,7 +175,7 @@ const dateFormat = (date) => {
   });
 };
 
-const firtItemDate = () => {
+const firstItemDate = () => {
   let date = store.userOrbits[0]?.contact_date;
   return date;
 };
@@ -223,7 +223,7 @@ const animateOrbitShift = async (direction = "animation") => {
       store.userOrbits.push(store.laterBuffer[0]);
       store.laterBuffer.shift();
       let currentDate = new Date(fetchDate.value);
-      currentDate.setDate(currentDate.getDate() - 1);
+      currentDate.setDate(currentDate.getDate() - 9);
       fetchDate.value = currentDate.toISOString().slice(0, 10);
       const arr = await store.getApiData(fetchDate.value);
       store.laterBuffer = arr;
