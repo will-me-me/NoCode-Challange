@@ -29,7 +29,7 @@ export const userMainStore = defineStore("mainstore", {
         const data = await response.json();
         this.laterBuffer = data;
         this.userOrbits = data;
-        // return data;
+        return data;
       } catch (error) {
         console.error("Error fetching data:", error);
       }
