@@ -150,7 +150,6 @@ const orbitShift = ref(nuxtApp.$screenHeight >= 1000 ? "200px" : "160px");
 const orbitTranslate = ref(`-${orbitShift.value.slice(0, 3) / 2}px`);
 const dateShift = ref(`${orbitShift.value.slice(0, 3) / 2 - 12}px`);
 const tooltip = ref(false);
-// const fetchDate = ref(new Date().toISOString().slice(0, 10));
 const isAnimation = ref(false);
 const animationDirection = ref("animation");
 const isConnectionInfoVisible = ref(false);
@@ -215,84 +214,84 @@ const handleScrollAndAnimate = (e) => {
   }
 };
 
-const animateOrbitShift = async (direction = "animation") => {
-  if (direction === "animation" && store.laterBuffer.length) {
-    isAnimation.value = true;
-    setTimeout(async () => {
-      store.priorBuffer.push(store.userOrbits.shift());
-      store.userOrbits.push(store.laterBuffer[0]);
-      store.laterBuffer.shift();
-      let currentDate = new Date(store.fetchDate);
-      currentDate.setDate(currentDate.getDate() - 1);
-      store.fetchDate = currentDate.toISOString().slice(0, 10);
-      console.log(firstItemDate());
-      const arr = await store.getApiData(store.fetchDate);
-      store.laterBuffer = arr;
-      isAnimation.value = false;
-    }, 990);
-  } else if (store.priorBuffer.length) {
-    store.userOrbits.unshift(store.priorBuffer.pop());
-    store.laterBuffer.unshift(store.userOrbits.pop());
-    isAnimation.value = true;
-    setTimeout(() => {
-      isAnimation.value = false;
-    }, 990);
-  }
-};
-
 // const animateOrbitShift = async (direction = "animation") => {
-//   try {
-//     // Ensure store.laterBuffer is always an array
-//     if (!Array.isArray(store.laterBuffer)) {
-//       store.laterBuffer = [];
-//       console.warn(
-//         "store.laterBuffer was not initialized, initializing now as an empty array."
-//       );
-//     }
-//     // Debug
-//     console.log("Initial store.laterBuffer:", store.laterBuffer);
-//     if (direction === "animation" && store.laterBuffer.length) {
-//       isAnimation.value = true;
-//       setTimeout(async () => {
-//         store.priorBuffer.push(store.userOrbits.shift());
-//         store.userOrbits.push(store.laterBuffer[0]);
-//         store.laterBuffer.shift();
-//         // ##DEBUG
-//         console.log("After shifting buffers:", {
-//           priorBuffer: store.priorBuffer,
-//           userOrbits: store.userOrbits,
-//           laterBuffer: store.laterBuffer,
-//         });
-
-//         let currentDate = new Date(fetchDate.value);
-//         // Reduce by 1 day
-//         currentDate.setDate(currentDate.getDate() - 1);
-//         fetchDate.value = currentDate.toISOString().slice(0, 10);
-//         // Debug
-//         console.log("Fetching new data for date:", fetchDate.value);
-//         const arr = await store.getApiData(fetchDate.value);
-//         console.log("here comes arr" + " ", arr);
-//         store.laterBuffer = arr;
-//         console.log(store.laterBuffer);
-//         // store.userOrbits = arr;
-//         // Debug
-//         console.log("After fetching new data:", store.laterBuffer);
-
-//         isAnimation.value = false;
-//       }, 900);
-//     } else {
-//       store.userOrbits.unshift(store.priorBuffer.pop());
-//       console.log(store.userOrbits);
-//       store.laterBuffer.unshift(store.userOrbits.pop());
-//       isAnimation.value = true;
-//       setTimeout(() => {
-//         isAnimation.value = false;
-//       }, 900);
-//     }
-//   } catch (error) {
-//     console.error("Error in animateOrbitShift:", error);
+//   if (direction === "animation" && store.laterBuffer.length) {
+//     isAnimation.value = true;
+//     setTimeout(async () => {
+//       store.priorBuffer.push(store.userOrbits.shift());
+//       store.userOrbits.push(store.laterBuffer[0]);
+//       store.laterBuffer.shift();
+//       let currentDate = new Date(store.fetchDate);
+//       currentDate.setDate(currentDate.getDate() - 1);
+//       store.fetchDate = currentDate.toISOString().slice(0, 10);
+//       console.log(firstItemDate());
+//       const arr = await store.getApiData(store.fetchDate);
+//       store.laterBuffer = arr;
+//       isAnimation.value = false;
+//     }, 990);
+//   } else if (store.priorBuffer.length) {
+//     store.userOrbits.unshift(store.priorBuffer.pop());
+//     store.laterBuffer.unshift(store.userOrbits.pop());
+//     isAnimation.value = true;
+//     setTimeout(() => {
+//       isAnimation.value = false;
+//     }, 990);
 //   }
 // };
+
+const animateOrbitShift = async (direction = "animation") => {
+  try {
+    // Ensure store.laterBuffer is always an array
+    if (!Array.isArray(store.laterBuffer)) {
+      store.laterBuffer = [];
+      console.warn(
+        "store.laterBuffer was not initialized, initializing now as an empty array."
+      );
+    }
+    // Debug
+    console.log("Initial store.laterBuffer:", store.laterBuffer);
+    if (direction === "animation" && store.laterBuffer.length) {
+      isAnimation.value = true;
+      setTimeout(async () => {
+        store.priorBuffer.push(store.userOrbits.shift());
+        store.userOrbits.push(store.laterBuffer[0]);
+        store.laterBuffer.shift();
+        // ##DEBUG
+        console.log("After shifting buffers:", {
+          priorBuffer: store.priorBuffer,
+          userOrbits: store.userOrbits,
+          laterBuffer: store.laterBuffer,
+        });
+
+        let currentDate = new Date(store.fetchDate);
+        // Reduce by 1 day
+        currentDate.setDate(currentDate.getDate() - 1);
+        store.fetchDate = currentDate.toISOString().slice(0, 10);
+        // Debug
+        console.log("Fetching new data for date:", store.fetchDate);
+        const arr = await store.getApiData(store.fetchDate);
+        console.log("here comes arr" + " ", arr);
+        store.laterBuffer = arr;
+        console.log(store.laterBuffer);
+        // store.userOrbits = arr;
+        // Debug
+        console.log("After fetching new data:", store.laterBuffer);
+
+        isAnimation.value = false;
+      }, 900);
+    } else {
+      store.userOrbits.unshift(store.priorBuffer.pop());
+      console.log(store.userOrbits);
+      store.laterBuffer.unshift(store.userOrbits.pop());
+      isAnimation.value = true;
+      setTimeout(() => {
+        isAnimation.value = false;
+      }, 900);
+    }
+  } catch (error) {
+    console.error("Error in animateOrbitShift:", error);
+  }
+};
 
 onMounted(async () => {
   await store.getApiData(store.fetchDate);
