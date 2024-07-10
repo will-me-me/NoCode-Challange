@@ -3,7 +3,7 @@
     <div
       class="d-flex overflow-hidden position-relative justify-center"
       :class="['container']"
-      @wheel="scrollHandler"
+      @wheel="handleScrollAndAnimate"
     >
       <div
         class="text-center position-absolute"
@@ -15,12 +15,12 @@
         ]"
       >
         <p :class="[animationDirection, { 'date-vanish': isAnimation }]">
-          {{ dateFormat(usersPerOrbit[0]?.contact_date) }}
+          {{ dateFormat(store.userOrbits[0]?.contact_date) }}
         </p>
       </div>
       <!-- {{ usersPerOrbit.length }} -->
       <div
-        v-for="i in usersPerOrbit.length"
+        v-for="i in store.userOrbits.length"
         :key="i"
         class="position-absolute d-flex justify-space-evenly align-center"
         :class="[
@@ -31,7 +31,7 @@
         :style="[calcDimensions(i)]"
       >
         <div
-          v-for="j in usersPerOrbit[i - 1]?.array"
+          v-for="j in store.userOrbits[i - 1]?.array"
           :key="j"
           class="user-icon position-absolute"
           :style="calcRotation(i, j, true)"
@@ -76,7 +76,7 @@
                     <div class="d-flex align-center">
                       <div>
                         <v-avatar
-                          v-for="i in MembersIcons"
+                          v-for="i in store.MembersIcons"
                           :key="i"
                           :image="i"
                           size="25"
@@ -119,8 +119,8 @@
                   <v-expansion-panels
                     bg-color="#0A0A0A"
                     variant="inset"
-                    :readonly="readonly"
-                    v-model="panel"
+                    :readonly="store.readonly"
+                    v-model="store.panel"
                   >
                     <v-expansion-panel
                       :title="j?._orbits_last_message?.message_head"
@@ -140,31 +140,20 @@
 </template>
 
 <script setup>
+import { userMainStore } from "@/stores/mainStore";
 import { useNuxtApp } from "#app";
 const nuxtApp = useNuxtApp();
-import { onMounted, reactive, ref } from "vue";
-const MembersIcons = [
-  "https://i.pravatar.cc/150?img=32",
-  "https://i.pravatar.cc/150?img=22",
-  "https://i.pravatar.cc/150?img=60",
-  "https://i.pravatar.cc/150?img=2",
-];
+import { onMounted, ref } from "vue";
+
+const store = userMainStore();
 const orbitShift = ref(nuxtApp.$screenHeight >= 1000 ? "200px" : "160px");
 const orbitTranslate = ref(`-${orbitShift.value.slice(0, 3) / 2}px`);
 const dateShift = ref(`${orbitShift.value.slice(0, 3) / 2 - 12}px`);
 const tooltip = ref(false);
-const tooltipRef = ref(null);
-const priorBuffer = ref([]);
-const usersPerOrbit = ref([]);
-const laterBuffer = ref([]);
 const fetchDate = ref(new Date().toISOString().slice(0, 10));
 const isAnimation = ref(false);
 const animationDirection = ref("animation");
 const isConnectionInfoVisible = ref(false);
-const eventTarget = ref();
-const connectionData = reactive({});
-const panel = [0, 1];
-const readonly = true;
 
 const calcDimensions = (position) => {
   return {
@@ -185,9 +174,9 @@ const dateFormat = (date) => {
 };
 
 const calcRotation = (orbitNum, user, direction) => {
-  const listLength = usersPerOrbit.value[orbitNum - 1]?.array.length;
+  const listLength = store.userOrbits[orbitNum - 1]?.array.length;
   const halfList = Math.ceil(listLength / 2);
-  const userIndex = usersPerOrbit.value[orbitNum - 1]?.array.indexOf(user) + 1;
+  const userIndex = store.userOrbits[orbitNum - 1]?.array.indexOf(user) + 1;
   const rotateDirection = direction ? "+" : "-";
   let resultingTransform;
   if (orbitNum === 1 && listLength % 2) {
@@ -211,48 +200,71 @@ const calcRotation = (orbitNum, user, direction) => {
   };
 };
 
-const scrollHandler = (e) => {
+const handleScrollAndAnimate = (e) => {
   isConnectionInfoVisible.value = false;
   animationDirection.value = e.deltaY > 0 ? "animation" : "reverse-animation";
   if (!isAnimation.value) {
-    shiftAndPullData(animationDirection.value);
+    animateOrbitShift(animationDirection.value);
   }
 };
 
-const shiftAndPullData = async (direction = "animation") => {
-  if (direction === "animation" && laterBuffer.value.length) {
-    isAnimation.value = true;
-    setTimeout(async () => {
-      priorBuffer.value.push(usersPerOrbit.value.shift());
-      usersPerOrbit.value.push(laterBuffer.value[0]);
-      laterBuffer.value.shift();
-      let currentDate = new Date(fetchDate.value);
-      currentDate.setDate(currentDate.getDate() - 1);
-      fetchDate.value = currentDate.toISOString().slice(0, 10);
-      const arr = await fetchNineDaysFromDate(fetchDate.value);
-      laterBuffer.value = arr;
-      isAnimation.value = false;
-    }, 995);
-  } else if (priorBuffer.value.length) {
-    usersPerOrbit.value.unshift(priorBuffer.value.pop());
-    laterBuffer.value.unshift(usersPerOrbit.value.pop());
-    isAnimation.value = true;
-    setTimeout(() => {
-      isAnimation.value = false;
-    }, 995);
-  }
-};
+const animateOrbitShift = async (direction = "animation") => {
+  try {
+    // Ensure store.laterBuffer is always an array
+    if (!Array.isArray(store.laterBuffer)) {
+      store.laterBuffer = [];
+      console.warn(
+        "store.laterBuffer was not initialized, initializing now as an empty array."
+      );
+    }
+    // Debug
+    console.log("Initial store.laterBuffer:", store.laterBuffer);
+    if (direction === "animation" && store.laterBuffer.length) {
+      isAnimation.value = true;
+      setTimeout(async () => {
+        store.priorBuffer.push(store.userOrbits.shift());
+        store.userOrbits.push(store.laterBuffer[0]);
+        store.laterBuffer.shift();
+        // ##DEBUG
+        console.log("After shifting buffers:", {
+          priorBuffer: store.priorBuffer,
+          userOrbits: store.userOrbits,
+          laterBuffer: store.laterBuffer,
+        });
 
-const fetchNineDaysFromDate = async (date) => {
-  return await fetch(
-    `https://xsrr-l2ye-dpbj.f2.xano.io/api:oUvfVMO5/receive_week?start_date=${date}`
-  ).then((response) => response.json());
+        let currentDate = new Date(fetchDate.value);
+        // Reduce by 1 day
+        currentDate.setDate(currentDate.getDate() - 1);
+        fetchDate.value = currentDate.toISOString().slice(0, 10);
+        // Debug
+        console.log("Fetching new data for date:", fetchDate.value);
+
+        const arr = await store.getApiData(fetchDate.value);
+        if (arr && arr.length) {
+          store.laterBuffer.push(...arr);
+        } else {
+          console.error("Error: Received empty data array from API");
+        }
+        // Debug
+        console.log("After fetching new data:", store.laterBuffer);
+
+        isAnimation.value = false;
+      }, 900);
+    } else if (store.priorBuffer.length) {
+      store.userOrbits.unshift(store.priorBuffer.pop());
+      store.laterBuffer.unshift(store.userOrbits.pop());
+      isAnimation.value = true;
+      setTimeout(() => {
+        isAnimation.value = false;
+      }, 900);
+    }
+  } catch (error) {
+    console.error("Error in animateOrbitShift:", error);
+  }
 };
 
 onMounted(async () => {
-  let data = await fetchNineDaysFromDate(fetchDate.value);
-  laterBuffer.value = data;
-  usersPerOrbit.value = data;
+  await store.getApiData(fetchDate.value);
 });
 </script>
 
