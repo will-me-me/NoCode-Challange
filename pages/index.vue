@@ -241,7 +241,9 @@ const animateOrbitShift = async (direction = "animation") => {
 
         const arr = await store.getApiData(fetchDate.value);
         if (arr && arr.length) {
-          store.laterBuffer.push(...arr);
+          console.log(arr);
+          store.laterBuffer = arr;
+          console.log(store.laterBuffer);
         } else {
           console.error("Error: Received empty data array from API");
         }
