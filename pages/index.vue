@@ -15,7 +15,7 @@
         ]"
       >
         <p :class="[animationDirection, { 'date-vanish': isAnimation }]">
-          {{ dateFormat(store.userOrbits[0]?.contact_date) }}
+          {{ dateFormat(firtItemDate()) }}
         </p>
       </div>
       <!-- {{ usersPerOrbit.length }} -->
@@ -165,12 +165,19 @@ const calcDimensions = (position) => {
 };
 
 const dateFormat = (date) => {
-  if (date === fetchDate.value) return "Today";
+  if (date === fetchDate.value) {
+    return "Today";
+  }
   return new Date(date).toLocaleString("en-GB", {
     weekday: "short",
     month: "short",
     day: "numeric",
   });
+};
+
+const firtItemDate = () => {
+  let date = store.userOrbits[0]?.contact_date;
+  return date;
 };
 
 const calcRotation = (orbitNum, user, direction) => {
