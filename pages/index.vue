@@ -40,8 +40,6 @@
             size="48"
             :style="calcRotation(i, j, false)"
             id="v-avatar-imag"
-            @mouseenter="showTooltip(j)"
-            @mouseleave="hideTooltip"
           >
             <v-tooltip
               theme="#0A0A0A"
@@ -56,13 +54,7 @@
                   v-bind="props"
                 ></v-img>
               </template>
-              <v-card
-                @mouseenter="persistTooltip"
-                @mouseleave="closeTooltip"
-                flat="flat"
-                width="600"
-                color="#0A0A0A"
-              >
+              <v-card flat="flat" width="600" color="#0A0A0A">
                 <v-card-title class="d-flex">
                   <v-avatar size="90">
                     <v-img class="gradient-border" :src="j.img"></v-img>
@@ -118,7 +110,12 @@
                   </div>
                 </div>
                 <v-divider></v-divider>
-                <v-expansion-panels bg-color="#0A0A0A" variant="inset">
+                <v-expansion-panels
+                  bg-color="#0A0A0A"
+                  variant="inset"
+                  :readonly="readonly"
+                  v-model="panel"
+                >
                   <v-expansion-panel
                     :title="j?._orbits_last_message?.message_head"
                     :text="j?._orbits_last_message?.message"
@@ -158,6 +155,8 @@ const animationDirection = ref("animation");
 const isConnectionInfoVisible = ref(false);
 const eventTarget = ref();
 const connectionData = reactive({});
+const panel = [0, 1];
+const readonly = true;
 
 const calcDimensions = (position) => {
   return {
@@ -166,42 +165,6 @@ const calcDimensions = (position) => {
     }px`,
     top: `calc(${orbitShift.value.slice(0, 3) / 2}px * ${position})`,
   };
-};
-
-// #ToDo Fix The ToolTip Hover
-
-const showTooltip = (item) => {
-  tooltip.value = true;
-  if (tooltipRef.value && typeof tooltipRef.value.runDelay === "function") {
-    tooltipRef.value.runDelay("open");
-  } else {
-    console.error("runDelay method not found");
-  }
-};
-
-const hideTooltip = () => {
-  tooltip.value = false;
-  if (tooltipRef.value && typeof tooltipRef.value.runDelay === "function") {
-    tooltipRef.value.runDelay("close");
-  } else {
-    console.error("runDelay method not found");
-  }
-};
-
-const persistTooltip = () => {
-  if (tooltipRef.value && typeof tooltipRef.value.runDelay === "function") {
-    tooltipRef.value.runDelay("open");
-  } else {
-    console.error("runDelay method not found");
-  }
-};
-
-const closeTooltip = () => {
-  if (tooltipRef.value && typeof tooltipRef.value.runDelay === "function") {
-    tooltipRef.value.runDelay("close");
-  } else {
-    console.error("runDelay method not found");
-  }
 };
 
 const dateFormat = (date) => {
@@ -249,7 +212,6 @@ const scrollHandler = (e) => {
 };
 
 const shiftAndPullData = async (direction = "animation") => {
-  console.log(direction);
   if (direction === "animation" && laterBuffer.value.length) {
     isAnimation.value = true;
     setTimeout(async () => {
@@ -262,14 +224,14 @@ const shiftAndPullData = async (direction = "animation") => {
       const arr = await fetchNineDaysFromDate(fetchDate.value);
       laterBuffer.value = arr;
       isAnimation.value = false;
-    }, 990);
+    }, 900);
   } else if (priorBuffer.value.length) {
     usersPerOrbit.value.unshift(priorBuffer.value.pop());
     laterBuffer.value.unshift(usersPerOrbit.value.pop());
     isAnimation.value = true;
     setTimeout(() => {
       isAnimation.value = false;
-    }, 990);
+    }, 900);
   }
 };
 
