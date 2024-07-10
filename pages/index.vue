@@ -239,7 +239,7 @@ const animateOrbitShift = async (direction = "animation") => {
         // Debug
         console.log("Fetching new data for date:", fetchDate.value);
         const arr = await store.getApiData(fetchDate.value);
-        store.laterBuffer = arr;
+        store.laterBuffer.push(...arr);
         console.log(store.laterBuffer);
         // Debug
         console.log("After fetching new data:", store.laterBuffer);
