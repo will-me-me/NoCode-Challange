@@ -223,8 +223,9 @@ const animateOrbitShift = async (direction = "animation") => {
       store.userOrbits.push(store.laterBuffer[0]);
       store.laterBuffer.shift();
       let currentDate = new Date(fetchDate.value);
-      currentDate.setDate(currentDate.getDate() - 9);
+      currentDate.setDate(currentDate.getDate() - 1);
       fetchDate.value = currentDate.toISOString().slice(0, 10);
+      console.log(firstItemDate());
       const arr = await store.getApiData(fetchDate.value);
       store.laterBuffer = arr;
       isAnimation.value = false;
