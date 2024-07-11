@@ -15,7 +15,6 @@ export const userMainStore = defineStore("mainstore", {
       userOrbits: [],
       priorBuffer: [],
       laterBuffer: [],
-      fetchDate: new Date().toISOString().slice(0, 10),
       animationDirection: "animation",
       isConnectionInfoVisible: false,
     };
@@ -30,8 +29,6 @@ export const userMainStore = defineStore("mainstore", {
           throw new console.error("failed to fetch data");
         }
         const data = await response.json();
-        this.laterBuffer = data;
-        this.userOrbits = data;
         return data;
       } catch (error) {
         console.error("Error fetching data:", error);

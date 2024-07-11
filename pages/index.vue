@@ -19,7 +19,7 @@
         </p>
       </div>
       <div
-        v-for="i in NineOrbits.length"
+        v-for="i in store.userOrbits.length"
         :key="i"
         class="position-absolute d-flex justify-space-evenly align-center"
         :class="[
@@ -30,7 +30,7 @@
         :style="[calcDimensions(i)]"
       >
         <div
-          v-for="j in NineOrbits[i - 1]?.array"
+          v-for="j in store.userOrbits[i - 1]?.array"
           :key="j"
           class="user-icon position-absolute"
           :style="calcRotation(i, j, true)"
@@ -150,9 +150,7 @@ const orbitTranslate = ref(`-${orbitShift.value.slice(0, 3) / 2}px`);
 const dateShift = ref(`${orbitShift.value.slice(0, 3) / 2 - 12}px`);
 const tooltip = ref(false);
 const isAnimation = ref(false);
-const dateToFetchDate = ref(store.fetchDate);
-let NineOrbits = ref([store.userOrbits]);
-// let futureOrbitData =ref
+let dateToFetchDate = ref(new Date().toISOString().slice(0, 10));
 
 const calcDimensions = (position) => {
   return {
@@ -175,14 +173,14 @@ const dateFormat = (date) => {
 };
 
 const firstItemDate = () => {
-  let date = NineOrbits[0]?.contact_date;
+  let date = store.userOrbits[0]?.contact_date;
   return date;
 };
 
 const calcRotation = (orbitNum, user, direction) => {
-  const listLength = NineOrbits[orbitNum - 1]?.array.length;
+  const listLength = store.userOrbits[orbitNum - 1]?.array.length;
   const halfList = Math.ceil(listLength / 2);
-  const userIndex = NineOrbits[orbitNum - 1]?.array.indexOf(user) + 1;
+  const userIndex = store.userOrbits[orbitNum - 1]?.array.indexOf(user) + 1;
   const rotateDirection = direction ? "+" : "-";
   let resultingTransform;
   if (orbitNum === 1 && listLength % 2) {
@@ -214,31 +212,6 @@ const handleScrollAndAnimate = (e) => {
   }
 };
 
-// const animateOrbitShift = async (direction = "animation") => {
-//   if (direction === "animation" && store.laterBuffer.length) {
-//     isAnimation.value = true;
-//     setTimeout(async () => {
-//       store.priorBuffer.push(NineOrbits.shift());
-//       NineOrbits.push(store.laterBuffer[0]);
-//       store.laterBuffer.shift();
-//       let currentDate = new Date(dateToFetchDate.value);
-//       currentDate.setDate(currentDate.getDate() - 1);
-//       dateToFetchDate.value = currentDate.toISOString().slice(0, 10);
-//       console.log(firstItemDate());
-//       const arr = await store.getApiData(dateToFetchDate.value);
-//       store.laterBuffer = arr;
-//       isAnimation.value = false;
-//     }, 990);
-//   } else if (store.priorBuffer.length) {
-//     NineOrbits.unshift(store.priorBuffer.pop());
-//     store.laterBuffer.unshift(NineOrbits.pop());
-//     isAnimation.value = true;
-//     setTimeout(() => {
-//       isAnimation.value = false;
-//     }, 990);
-//   }
-// };
-
 const animateOrbitShift = async (direction = "animation") => {
   try {
     // Ensure store.laterBuffer is always an array
@@ -253,13 +226,13 @@ const animateOrbitShift = async (direction = "animation") => {
     if (direction === "animation" && store.laterBuffer.length) {
       isAnimation.value = true;
       setTimeout(async () => {
-        store.priorBuffer.push(NineOrbits.shift());
-        NineOrbits.push(store.laterBuffer[0]);
-        store.laterBuffer.shift();
+        store.priorBuffer.push(store.userOrbits.shift());
+        store.userOrbits.push(store.laterBuffer[0]);
+        // store.laterBuffer.shift();
         // ##DEBUG
         console.log("After shifting buffers:", {
           priorBuffer: store.priorBuffer,
-          userOrbits: NineOrbits,
+          userOrbits: store.userOrbits,
           laterBuffer: store.laterBuffer,
         });
 
@@ -271,22 +244,24 @@ const animateOrbitShift = async (direction = "animation") => {
         console.log("Fetching new data for date:", dateToFetchDate.value);
         const arr = await store.getApiData(dateToFetchDate.value);
         console.log("here comes arr" + " ", arr);
-        store.laterBuffer = arr;
+        if (arr.length) {
+          store.laterBuffer = arr;
+        }
         console.log(store.laterBuffer);
-        // NineOrbits = arr;
+        // store.userOrbits = arr;
         // Debug
         console.log("After fetching new data:", store.laterBuffer);
 
         isAnimation.value = false;
-      }, 900);
+      }, 990);
     } else {
-      NineOrbits.unshift(store.priorBuffer.pop());
-      console.log(NineOrbits);
-      store.laterBuffer.unshift(NineOrbits.pop());
+      store.userOrbits.unshift(store.priorBuffer.pop());
+      console.log(store.userOrbits);
+      store.laterBuffer.unshift(store.userOrbits.pop());
       isAnimation.value = true;
       setTimeout(() => {
         isAnimation.value = false;
-      }, 900);
+      }, 990);
     }
   } catch (error) {
     console.error("Error in animateOrbitShift:", error);
@@ -294,8 +269,10 @@ const animateOrbitShift = async (direction = "animation") => {
 };
 
 onMounted(async () => {
-  let data = await store.getApiData(dateToFetchDate.value);
-  NineOrbits = data;
+  let initialData = await store.getApiData(dateToFetchDate.value);
+  if (initialData.length) {
+    store.userOrbits = initialData;
+  }
 });
 </script>
 
