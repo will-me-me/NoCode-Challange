@@ -18,7 +18,6 @@
           {{ dateFormat(firstItemDate()) }}
         </p>
       </div>
-      <!-- {{ usersPerOrbit.length }} -->
       <div
         v-for="i in NineOrbits.length"
         :key="i"
@@ -152,7 +151,7 @@ const dateShift = ref(`${orbitShift.value.slice(0, 3) / 2 - 12}px`);
 const tooltip = ref(false);
 const isAnimation = ref(false);
 const dateToFetchDate = ref(store.fetchDate);
-const NineOrbits = ref(store.userOrbits);
+let NineOrbits = ref(store.userOrbits);
 
 const calcDimensions = (position) => {
   return {
@@ -294,7 +293,9 @@ const animateOrbitShift = async (direction = "animation") => {
 };
 
 onMounted(async () => {
-  await store.getApiData(dateToFetchDate.value);
+  let data = await store.getApiData(dateToFetchDate.value);
+  console.log(data);
+  NineOrbits = data;
 });
 </script>
 
