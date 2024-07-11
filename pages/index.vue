@@ -152,7 +152,7 @@ const dateShift = ref(`${orbitShift.value.slice(0, 3) / 2 - 12}px`);
 const tooltip = ref(false);
 const isAnimation = ref(false);
 const dateToFetchDate = ref(store.fetchDate);
-const NineOrbits = ref[store.userOrbits];
+const NineOrbits = ref(store.userOrbits);
 
 const calcDimensions = (position) => {
   return {
