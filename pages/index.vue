@@ -20,7 +20,7 @@
       </div>
       <!-- {{ usersPerOrbit.length }} -->
       <div
-        v-for="i in store.userOrbits.length"
+        v-for="i in NineOrbits.length"
         :key="i"
         class="position-absolute d-flex justify-space-evenly align-center"
         :class="[
@@ -31,7 +31,7 @@
         :style="[calcDimensions(i)]"
       >
         <div
-          v-for="j in store.userOrbits[i - 1]?.array"
+          v-for="j in NineOrbits[i - 1]?.array"
           :key="j"
           class="user-icon position-absolute"
           :style="calcRotation(i, j, true)"
@@ -151,8 +151,8 @@ const orbitTranslate = ref(`-${orbitShift.value.slice(0, 3) / 2}px`);
 const dateShift = ref(`${orbitShift.value.slice(0, 3) / 2 - 12}px`);
 const tooltip = ref(false);
 const isAnimation = ref(false);
-
 const dateToFetchDate = ref(store.fetchDate);
+const NineOrbits = ref[store.userOrbits];
 
 const calcDimensions = (position) => {
   return {
@@ -175,14 +175,14 @@ const dateFormat = (date) => {
 };
 
 const firstItemDate = () => {
-  let date = store.userOrbits[0]?.contact_date;
+  let date = NineOrbits[0]?.contact_date;
   return date;
 };
 
 const calcRotation = (orbitNum, user, direction) => {
-  const listLength = store.userOrbits[orbitNum - 1]?.array.length;
+  const listLength = NineOrbits[orbitNum - 1]?.array.length;
   const halfList = Math.ceil(listLength / 2);
-  const userIndex = store.userOrbits[orbitNum - 1]?.array.indexOf(user) + 1;
+  const userIndex = NineOrbits[orbitNum - 1]?.array.indexOf(user) + 1;
   const rotateDirection = direction ? "+" : "-";
   let resultingTransform;
   if (orbitNum === 1 && listLength % 2) {
@@ -218,8 +218,8 @@ const handleScrollAndAnimate = (e) => {
 //   if (direction === "animation" && store.laterBuffer.length) {
 //     isAnimation.value = true;
 //     setTimeout(async () => {
-//       store.priorBuffer.push(store.userOrbits.shift());
-//       store.userOrbits.push(store.laterBuffer[0]);
+//       store.priorBuffer.push(NineOrbits.shift());
+//       NineOrbits.push(store.laterBuffer[0]);
 //       store.laterBuffer.shift();
 //       let currentDate = new Date(dateToFetchDate.value);
 //       currentDate.setDate(currentDate.getDate() - 1);
@@ -230,8 +230,8 @@ const handleScrollAndAnimate = (e) => {
 //       isAnimation.value = false;
 //     }, 990);
 //   } else if (store.priorBuffer.length) {
-//     store.userOrbits.unshift(store.priorBuffer.pop());
-//     store.laterBuffer.unshift(store.userOrbits.pop());
+//     NineOrbits.unshift(store.priorBuffer.pop());
+//     store.laterBuffer.unshift(NineOrbits.pop());
 //     isAnimation.value = true;
 //     setTimeout(() => {
 //       isAnimation.value = false;
@@ -253,13 +253,13 @@ const animateOrbitShift = async (direction = "animation") => {
     if (direction === "animation" && store.laterBuffer.length) {
       isAnimation.value = true;
       setTimeout(async () => {
-        store.priorBuffer.push(store.userOrbits.shift());
-        store.userOrbits.push(store.laterBuffer[0]);
+        store.priorBuffer.push(NineOrbits.shift());
+        NineOrbits.push(store.laterBuffer[0]);
         store.laterBuffer.shift();
         // ##DEBUG
         console.log("After shifting buffers:", {
           priorBuffer: store.priorBuffer,
-          userOrbits: store.userOrbits,
+          userOrbits: NineOrbits,
           laterBuffer: store.laterBuffer,
         });
 
@@ -273,16 +273,16 @@ const animateOrbitShift = async (direction = "animation") => {
         console.log("here comes arr" + " ", arr);
         store.laterBuffer = arr;
         console.log(store.laterBuffer);
-        // store.userOrbits = arr;
+        // NineOrbits = arr;
         // Debug
         console.log("After fetching new data:", store.laterBuffer);
 
         isAnimation.value = false;
       }, 900);
     } else {
-      store.userOrbits.unshift(store.priorBuffer.pop());
-      console.log(store.userOrbits);
-      store.laterBuffer.unshift(store.userOrbits.pop());
+      NineOrbits.unshift(store.priorBuffer.pop());
+      console.log(NineOrbits);
+      store.laterBuffer.unshift(NineOrbits.pop());
       isAnimation.value = true;
       setTimeout(() => {
         isAnimation.value = false;
