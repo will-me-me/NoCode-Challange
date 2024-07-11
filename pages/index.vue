@@ -152,6 +152,8 @@ const dateShift = ref(`${orbitShift.value.slice(0, 3) / 2 - 12}px`);
 const tooltip = ref(false);
 const isAnimation = ref(false);
 
+const dateToFetchDate = ref(store.fetchDate);
+
 const calcDimensions = (position) => {
   return {
     height: `calc(100% * 2 - ${
@@ -162,7 +164,7 @@ const calcDimensions = (position) => {
 };
 
 const dateFormat = (date) => {
-  if (date === store.fetchDate) {
+  if (date === dateToFetchDate.value) {
     return "Today";
   }
   return new Date(date).toLocaleString("en-GB", {
@@ -219,11 +221,11 @@ const handleScrollAndAnimate = (e) => {
 //       store.priorBuffer.push(store.userOrbits.shift());
 //       store.userOrbits.push(store.laterBuffer[0]);
 //       store.laterBuffer.shift();
-//       let currentDate = new Date(store.fetchDate);
+//       let currentDate = new Date(dateToFetchDate.value);
 //       currentDate.setDate(currentDate.getDate() - 1);
-//       store.fetchDate = currentDate.toISOString().slice(0, 10);
+//       dateToFetchDate.value = currentDate.toISOString().slice(0, 10);
 //       console.log(firstItemDate());
-//       const arr = await store.getApiData(store.fetchDate);
+//       const arr = await store.getApiData(dateToFetchDate.value);
 //       store.laterBuffer = arr;
 //       isAnimation.value = false;
 //     }, 990);
@@ -261,13 +263,13 @@ const animateOrbitShift = async (direction = "animation") => {
           laterBuffer: store.laterBuffer,
         });
 
-        let currentDate = new Date(store.fetchDate);
+        let currentDate = new Date(dateToFetchDate.value);
         // Reduce by 1 day
         currentDate.setDate(currentDate.getDate() - 1);
-        store.fetchDate = currentDate.toISOString().slice(0, 10);
+        dateToFetchDate.value = currentDate.toISOString().slice(0, 10);
         // Debug
-        console.log("Fetching new data for date:", store.fetchDate);
-        const arr = await store.getApiData(store.fetchDate);
+        console.log("Fetching new data for date:", dateToFetchDate.value);
+        const arr = await store.getApiData(dateToFetchDate.value);
         console.log("here comes arr" + " ", arr);
         store.laterBuffer = arr;
         console.log(store.laterBuffer);
@@ -292,7 +294,7 @@ const animateOrbitShift = async (direction = "animation") => {
 };
 
 onMounted(async () => {
-  await store.getApiData(store.fetchDate);
+  await store.getApiData(dateToFetchDate.value);
 });
 </script>
 
