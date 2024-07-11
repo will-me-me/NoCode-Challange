@@ -10,11 +10,11 @@
         color="#929292"
         :class="[
           'orbit-date',
-          animationDirection,
+          store.animationDirection,
           { 'date-shift': isAnimation },
         ]"
       >
-        <p :class="[animationDirection, { 'date-vanish': isAnimation }]">
+        <p :class="[store.animationDirection, { 'date-vanish': isAnimation }]">
           {{ dateFormat(firstItemDate()) }}
         </p>
       </div>
@@ -25,7 +25,7 @@
         class="position-absolute d-flex justify-space-evenly align-center"
         :class="[
           'single-orbit',
-          animationDirection,
+          store.animationDirection,
           isAnimation ? `animation-sequence-${i}` : '',
         ]"
         :style="[calcDimensions(i)]"
@@ -151,8 +151,6 @@ const orbitTranslate = ref(`-${orbitShift.value.slice(0, 3) / 2}px`);
 const dateShift = ref(`${orbitShift.value.slice(0, 3) / 2 - 12}px`);
 const tooltip = ref(false);
 const isAnimation = ref(false);
-const animationDirection = ref("animation");
-const isConnectionInfoVisible = ref(false);
 
 const calcDimensions = (position) => {
   return {
@@ -207,10 +205,10 @@ const calcRotation = (orbitNum, user, direction) => {
 };
 
 const handleScrollAndAnimate = (e) => {
-  isConnectionInfoVisible.value = false;
-  animationDirection.value = e.deltaY > 0 ? "animation" : "reverse-animation";
+  store.isConnectionInfoVisible = false;
+  store.animationDirection = e.deltaY > 0 ? "animation" : "reverse-animation";
   if (!isAnimation.value) {
-    animateOrbitShift(animationDirection.value);
+    animateOrbitShift(store.animationDirection);
   }
 };
 

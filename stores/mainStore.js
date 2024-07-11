@@ -16,6 +16,8 @@ export const userMainStore = defineStore("mainstore", {
       priorBuffer: [],
       laterBuffer: [],
       fetchDate: new Date().toISOString().slice(0, 10),
+      animationDirection: "animation",
+      isConnectionInfoVisible: false,
     };
   },
   actions: {
